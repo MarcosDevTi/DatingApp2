@@ -52,7 +52,6 @@ namespace DatingApp.API.Controllers
                 new Claim(ClaimTypes.NameIdentifier, userfromRepository.Id.ToString()),
                 new Claim(ClaimTypes.Name, userfromRepository.Username)
             };
-
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetSection("AppSettings:Token").Value));
 
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
@@ -72,6 +71,7 @@ namespace DatingApp.API.Controllers
             {
                 token = tokenHandler.WriteToken(token)
             });
+ 
         }
 
     }
