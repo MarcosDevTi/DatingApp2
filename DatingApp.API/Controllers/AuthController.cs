@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using DatingApp.API.Data;
 using DatingApp.API.DTOs;
 using DatingApp.API.Models;
@@ -18,10 +19,12 @@ namespace DatingApp.API.Controllers
     {
         public readonly IAuthRepository _repository;
         private readonly IConfiguration _config;
-        public AuthController(IAuthRepository repository, IConfiguration config)
+        private readonly IMapper _mapper;
+        public AuthController(IAuthRepository repository, IConfiguration config, IMapper mapper)
         {
             _config = config;
             _repository = repository;
+            _mapper = mapper;
         }
 
         [HttpPost("Register")]
@@ -32,13 +35,12 @@ namespace DatingApp.API.Controllers
             if (await _repository.UserExists(userForRegisterDto.Username))
                 return BadRequest("Username alredy exists");
 
-            var userToCreate = new User
-            {
-                Username = userForRegisterDto.Username
-            };
-            var createdUser = await _repository.Register(userToCreate, userForRegisterDto.Password);
+            var userToCreate = _mapper.Map<User>(userForRegisterDto);
 
-            return StatusCode(201);
+            var createdUser = await _repository.Register(userToCreate, userForRegisterDto.Password);
+            var userToReturn = _mapper.Map<UserForDetailedDto>(createdUser);
+            return CreatedAtRoute("GetUser", new {controller = "Users", 
+            id = createdUser.Id}, userToReturn);
         }
 
         [HttpPost("Login")]
@@ -67,9 +69,12 @@ namespace DatingApp.API.Controllers
 
             var token = tokenHandler.CreateToken(tokenDecriptor);
 
+            var user = _mapper.Map<UserForListDto>(userfromRepository);
+
             return Ok(new
             {
-                token = tokenHandler.WriteToken(token)
+                token = tokenHandler.WriteToken(token),
+                user
             });
  
         }
